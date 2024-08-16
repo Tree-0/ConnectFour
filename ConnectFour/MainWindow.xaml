@@ -42,7 +42,7 @@
         <!-- Info Panel -->
         <StackPanel Grid.Row="1" Grid.Column="0" >
             <TextBlock Text="Player Turn:" FontSize="20" TextWrapping="Wrap" Margin="0,10,0,10"/>
-            <TextBlock x:Name="PlayerTurnTextBlock" Text="R" Background="LightGray"/>
+            <TextBlock x:Name="PlayerTurnTextBlock" Text="{Binding PlayerTurn, Mode=OneWay}" Background="LightGray"/>
             <TextBlock Text="Turn #:" Margin="0,10,0,10"/>
             <TextBlock x:Name="TurnCountTextBlock" Text="{Binding TurnNumber, Mode=OneWay}" Background="LightGray"/>
         </StackPanel>
@@ -79,6 +79,7 @@
             </Grid.RowDefinitions>
 
             <!-- Individual Borders with a Button inside each cell to make the entire cell clickable -->
+            <!-- List of Borders/Buttons for game board -->
             <!--#region -->
 
             <!-- Row 0 -->

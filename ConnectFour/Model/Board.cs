@@ -19,8 +19,11 @@ namespace ConnectFour.Model
         // convenience property for later
         public int EmptyRows { get; set; }
 
-
-
+        /// <summary>
+        /// Constructor
+        /// </summary>
+        /// <param name="height"></param> 
+        /// <param name="width"></param>
         public Board(int height=6, int width=7)
         {
             Height = height; Width = width;
@@ -38,6 +41,7 @@ namespace ConnectFour.Model
             }
         }
 
+
         /// <summary>
         /// Place the designated player's token in the designated column
         /// </summary>
@@ -45,8 +49,10 @@ namespace ConnectFour.Model
         ///     0 < col < Board.Width
         /// <param name="player"></param>
         ///     player is 'R' or 'Y'
-        public void PlaceToken(int col, char player)
+        public int PlaceToken(int col, char player)
         {
+            int rowPlaced = -1;
+
             for (int row = Tokens.GetLength(0) - 1; row >= 0; row--)
             {
                 if (Tokens[row, col] == '-')
@@ -54,12 +60,57 @@ namespace ConnectFour.Model
                     // check if token was placed in empty row
                     EmptyRows = Math.Min(EmptyRows, row);
 
+                    // store the row this token was placed in
+                    rowPlaced = row;
+
+                    // add to model
                     Tokens[row, col] = player; 
                     break;
                 }
             }
+
+            return rowPlaced;
         }
 
+
+        /// <summary>
+        /// Remove the token at the specified index. If successfully removed, return True.
+        /// If there was nothing to remove, return False. 
+        /// </summary>
+        /// <param name="row"></param>
+        /// <param name="col"></param>
+        /// <returns></returns>
+        public bool RemoveToken(int row, int col)
+        {
+            if (Tokens[row, col] == '-')
+                return false;
+
+            Tokens[row, col] = '-';
+            return true;
+        }
+
+
+        /// <summary>
+        /// Remove every token on the board. Always returns true.
+        /// </summary>
+        /// <returns></returns>
+        public bool RemoveAllTokens()
+        {
+            for(int row = 0; row < Height; row++)
+            {
+                for(int col = 0; col < Width; col++)
+                {
+                    RemoveToken(row, col);
+                }
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        /// Returns a string representation of the board, where each row is broken by \n and each item is separated by ','
+        /// </summary>
+        /// <returns></returns>
         public override string ToString()
         {
             StringBuilder sb = new StringBuilder();
