@@ -20,13 +20,12 @@ namespace ConnectFour
     /*
      * BUGS: 
      * 
-     * FIXED: When clicking the tile a preview is in directly, it makes all of that player's future tokens look like previews, even after confirming a move
+    */
+
+    /*
+     * TODO:
      * 
-     * TODO: Detecting when a column is full still does not work properly
-     * 
-     * TODO: Something might be wrong with the win checker still? test
-     * 
-     * 
+     * ADD ARROW KEYS AND ENTER KEY FUNCTIONALITY
      * 
      */
 
@@ -83,6 +82,13 @@ namespace ConnectFour
 
 
         /// <summary>
+        /// boolean that marks the game as finished when a winner is found.
+        /// Used to prevent further moves until restart
+        /// </summary>
+        private bool _isGameOver { get; set; }
+
+
+        /// <summary>
         /// Constructor
         /// </summary>
         public MainWindow()
@@ -94,6 +100,7 @@ namespace ConnectFour
             Board = new Board();
             TurnNumber = 0;
             PlayerTurn = 'R';
+            _isGameOver = false;
 
         }
 
@@ -194,11 +201,17 @@ namespace ConnectFour
         /// <param name="e"></param>
         private void ConfirmMoveButton_Click(object sender, RoutedEventArgs e)
         {
+
+            // Nothing should happen if a winner has already been determined
+            if (_isGameOver)
+            {
+                return;
+            }
+
             // Nothing should happen if no cell selected or if column is full
             if (_selectedBorder == null)
             {
-                GameNameTextBox.Text = "Select a valid cell";
-                _selectedBorder = null;
+                GameNameTextBox.Text = "Select a valid cell";                
                 return;
             }
 
@@ -212,6 +225,9 @@ namespace ConnectFour
                 GameNameTextBox.Text = "Column is full";
                 return;
             }
+
+            // Remove preview token to prevent visual inconsistency
+            RemoveTokenPreviewFromGridCell(row, col);
 
             // Add token to the grid visually
             if (!AddTokenToGridCell(row, col))
@@ -228,15 +244,20 @@ namespace ConnectFour
             if (winner == 'Y')
             {
                 GameNameTextBox.Text = "Yellow Wins";
+                _isGameOver = true;
             }
             else if (winner == 'R')
             {
                 GameNameTextBox.Text = "Red Wins";
+                _isGameOver = true;
             }
             else
             {
                 GameNameTextBox.Text = "Connect 4";
             }
+
+            // Prevent accidentally stacking multiple tokens on each other
+            _selectedBorder = null;
 
             // Switch player
             PlayerTurn = (PlayerTurn == 'Y') ? 'R' : 'Y';
@@ -262,6 +283,7 @@ namespace ConnectFour
             // New game, Turn = 0
             TurnNumber = 0;
             PlayerTurn = 'R';
+            _isGameOver = false;
         }
 
 
@@ -408,5 +430,16 @@ namespace ConnectFour
                 BoardGrid.Children.Remove(previewTokenToRemove);
             }
         }
+
+        // Enter key pressed -> trigger confirmMove button
+        private void Window_PreviewKeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.Enter)
+            {
+                ConfirmMoveButton_Click(ConfirmMoveButton, null);
+                e.Handled = true; // Mark the event as handled to prevent further processing
+            }
+        }
+
     }
 }
