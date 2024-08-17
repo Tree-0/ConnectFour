@@ -1,6 +1,7 @@
 ﻿using ConnectFour.Model;
 using Microsoft.Windows.Themes;
 using System.ComponentModel;
+using System.Data.Common;
 using System.Diagnostics;
 using System.Security.Policy;
 using System.Text;
@@ -16,6 +17,20 @@ using System.Windows.Shapes;
 
 namespace ConnectFour
 {
+    /*
+     * BUGS: 
+     * 
+     * FIXED: When clicking the tile a preview is in directly, it makes all of that player's future tokens look like previews, even after confirming a move
+     * 
+     * TODO: Detecting when a column is full still does not work properly
+     * 
+     * TODO: Something might be wrong with the win checker still? test
+     * 
+     * 
+     * 
+     */
+
+
     /// <summary>
     /// Interaction logic for MainWindow.xaml
     /// </summary>
@@ -93,11 +108,11 @@ namespace ConnectFour
 
 
         /// <summary>
-        /// Add a token to the BoardGrid in the designated row and column
+        /// Add a token to the BoardGrid in the designated row and column. Returns true if successful.
         /// </summary>
         /// <param name="row"></param>
         /// <param name="column"></param>
-        private void AddTokenToGridCell(int row, int column)
+        private bool AddTokenToGridCell(int row, int column)
         {
             // Create an Ellipse (circle)
             Ellipse ellipse = new Ellipse
@@ -106,15 +121,27 @@ namespace ConnectFour
                 Height = BoardGrid.Width / 7, // Set height
                 Fill = (PlayerTurn == 'Y') ? Brushes.LightGoldenrodYellow : Brushes.Coral,
                 Stroke = Brushes.Black,
-                StrokeThickness = 2 
+                StrokeThickness = 2,
+                Focusable = false
             };
 
-            // Position the Ellipse in the specified Grid cell
-            Grid.SetRow(ellipse, row);
+            // Position the Ellipse in the specified Grid cell if row is not full
+            if (row >= 0)
+            {
+                Grid.SetRow(ellipse, row);
+                GameNameTextBox.Text = "Connect 4";
+            }
+            // row is full
+            else
+            {
+                return false;
+            }
+                        
             Grid.SetColumn(ellipse, column);
 
             // Add the Ellipse to the Grid's children
             BoardGrid.Children.Add(ellipse);
+            return true;
         }
 
 
@@ -164,13 +191,39 @@ namespace ConnectFour
         /// <param name="e"></param>
         private void ConfirmMoveButton_Click(object sender, RoutedEventArgs e)
         {
+            // Nothing should happen if no cell selected or if column is full
+            if (_selectedBorder == null)
+            {
+                GameNameTextBox.Text = "Select a valid cell";
+                _selectedBorder = null;
+                return;
+            }
+
             // Move finished, increase turn count
             TurnNumber++;
 
             // Place Token 
             int col = Grid.GetColumn(_selectedBorder);
             int row = Board.PlaceToken(col, PlayerTurn);
-            AddTokenToGridCell(row, col);
+
+            // if column is full token will not add
+            if (!AddTokenToGridCell(row, col))
+                GameNameTextBox.Text = "Column is full";
+
+            // Check for a winner
+            char winner = Board.CheckForWin();
+            if (winner == 'Y')
+            {
+                GameNameTextBox.Text = "Yellow Wins";
+            }
+            else if (winner == 'R')
+            {
+                GameNameTextBox.Text = "Red Wins";
+            }
+            else
+            {
+                GameNameTextBox.Text = "Connect 4";
+            }
 
             // Switch player
             PlayerTurn = (PlayerTurn == 'Y') ? 'R' : 'Y';
@@ -189,6 +242,9 @@ namespace ConnectFour
 
             // Remove model tokens
             Board.RemoveAllTokens();
+
+            // Revert Win Message
+            GameNameTextBox.Text = "Connect 4";
 
             // New game, Turn = 0
             TurnNumber = 0;
@@ -214,7 +270,7 @@ namespace ConnectFour
 
 
         /// <summary>
-        /// When a cell is clicked, change the border color and place a token
+        /// When a cell is clicked, change the border color and place a preview token
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
@@ -230,9 +286,18 @@ namespace ConnectFour
                 // Highlight the selected border
                 if (selectedBorder != null)
                 {
-                    selectedBorder.BorderBrush = Brushes.Red;
+                    selectedBorder.BorderBrush = (PlayerTurn == 'R') ? Brushes.Red : Brushes.Yellow;
                     selectedBorder.Background = Brushes.LightGray;
+                    Panel.SetZIndex(selectedBorder, -1);
                 }
+
+                int col = Grid.GetColumn(selectedBorder);
+                int row = Board.GetLowestEmptyRow(col);
+                if (row != -1)
+                {
+                    AddTokenPreviewToGridCell(row, col);
+                }
+                
             }
         }
 
@@ -257,6 +322,77 @@ namespace ConnectFour
                     selectedBorder.Background = Brushes.Transparent;
                 }
 
+                // remove preview token from de-selected cell
+                int col = Grid.GetColumn(selectedBorder);
+                int row = Board.GetLowestEmptyRow(col);
+                RemoveTokenPreviewFromGridCell(row, col);
+
+            }
+        }
+
+
+        /// <summary>
+        /// Adds a token preview to the selected cell as a visual aid. Not final, becomes final when confirm button is clicked
+        /// </summary>
+        /// <param name="row"></param>
+        /// <param name="column"></param>
+        private void AddTokenPreviewToGridCell(int row, int column)
+        {
+            // Create an Ellipse (circle)
+            Ellipse ellipse = new Ellipse
+            {
+                Width = BoardGrid.Width / 7, // Set width
+                Height = BoardGrid.Width / 7, // Set height
+                Fill = (PlayerTurn == 'Y') ? Brushes.LightGoldenrodYellow : Brushes.Coral,
+                Stroke = Brushes.Gray,
+                StrokeThickness = 2,
+                Focusable = false,
+                Tag = "preview"
+            };
+
+            // Check if an ellipse preview already exists at the row and column
+            foreach (UIElement element in BoardGrid.Children)
+            {
+                if (Grid.GetRow(element) == row && Grid.GetColumn(element) == column
+                    && element is Ellipse existing && existing.Tag != null
+                    && existing.Tag.ToString() == "preview")
+                {
+                    // Do nothing, return
+                    return;
+                }
+            }
+
+            Grid.SetRow(ellipse, row);
+            Grid.SetColumn(ellipse, column);
+            Grid.SetZIndex(ellipse, 1);
+            BoardGrid.Children.Add(ellipse);
+        }
+
+        /// <summary>
+        /// Remove the preview token from the specified cell.
+        /// </summary>
+        /// <param name="row"></param>
+        /// <param name="column"></param>
+        private void RemoveTokenPreviewFromGridCell(int row, int column)
+        {
+            UIElement previewTokenToRemove = null;
+
+            // Iterate over the Grid's children to find the preview token in the specified cell
+            foreach (UIElement element in BoardGrid.Children)
+            {
+                if (Grid.GetRow(element) == row && Grid.GetColumn(element) == column 
+                    && element is Ellipse ellipse && ellipse.Tag != null 
+                    && ellipse.Tag.ToString() == "preview")
+                {
+                    previewTokenToRemove = element;
+                    break;
+                }
+            }
+
+            // If the preview token was found, remove it from the Grid
+            if (previewTokenToRemove != null)
+            {
+                BoardGrid.Children.Remove(previewTokenToRemove);
             }
         }
     }

@@ -37,7 +37,7 @@
         </Grid.RowDefinitions>
         
         <!-- Label -->
-        <TextBlock Text="Connect 4" FontFamily="Courier New Bold" FontSize="20" Grid.Column="1" TextAlignment="Center" VerticalAlignment="Center"/>
+        <TextBlock x:Name="GameNameTextBox" Text="Connect 4" FontFamily="Courier New Bold" FontSize="20" Grid.Column="1" TextAlignment="Center" VerticalAlignment="Center"/>
         
         <!-- Info Panel -->
         <StackPanel Grid.Row="1" Grid.Column="0" >
@@ -53,8 +53,12 @@
             <!-- STYLES -->
             <Grid.Resources>
                 <Style TargetType="Border">
-                    <Setter Property="BorderThickness" Value="2"/>
+                    <Setter Property="BorderThickness" Value="1"/>
                     <Setter Property="BorderBrush" Value="Black"/>
+                    <Setter Property="Panel.ZIndex" Value="1"/>
+                </Style>
+                <Style TargetType="Button">
+                    <Setter Property="Panel.ZIndex" Value="-1"/>
                 </Style>
             </Grid.Resources>
             
@@ -219,12 +223,11 @@
             <Border Grid.Row="5" Grid.Column="6">
                 <Button Background="Transparent" Click="GridCell_GotFocus" LostFocus="GridCell_LostFocus"/>
             </Border>
-
+            <!--#endregion-->
 
             <!-- Outer Border to represent the entire game area -->
             <Border BorderBrush="Black" BorderThickness="4" Grid.ColumnSpan="7" Grid.RowSpan="6" Panel.ZIndex="-1"/>
 
-            <!--#endregion-->
             
         </Grid>
 

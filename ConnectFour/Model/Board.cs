@@ -1,12 +1,30 @@
 ﻿using System;
 using System.CodeDom;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace ConnectFour.Model
 {
+    /*TODO
+     * 
+     * 
+     * - VISUAL PREVIEW OF TOKEN TO BE PLACED BEFORE CONFIRMING
+     *          - FIX VISUAL PREVIEW BREAKING WIN CHECKER
+     * 
+     * - FIX COLUMN NOT REGISTERING AS FULL WHEN I DON'T EXPLICITLY SELECT A NEW BORDER
+     * 
+     * - - - NEW CLASS FOR SERIALIZATION OF BOARD INTO BINARY OR 0x
+     * 
+     * - MAKE GAME MORE VISUALLY SMOOTH AND APPEALING
+     *      - Weird Grid Borders
+     *      - Animation for dropping token?
+     */
+
+
+
     public class Board
     {
         public char[,] Tokens;
@@ -72,6 +90,20 @@ namespace ConnectFour.Model
             return rowPlaced;
         }
 
+        public int GetLowestEmptyRow(int col)
+        {
+            for (int row = Height - 1; row >= 0; row--)
+            {
+                if (Tokens[row, col] == '-')
+                {
+                    return row;
+                }
+            }
+
+            // No Empty Rows
+            return -1; 
+        }
+
 
         /// <summary>
         /// Remove the token at the specified index. If successfully removed, return True.
@@ -105,6 +137,102 @@ namespace ConnectFour.Model
             }
 
             return true;
+        }
+
+
+        /// <summary>
+        /// Check the board to see if any player has gotten 4 tokens in a row.
+        /// Return 'R', 'Y', or '-' if there was no winner.
+        /// </summary>
+        /// <returns></returns>
+        public char CheckForWin()
+        {
+            /*
+             * x x x x x x x
+             * x x x x x x x
+             * x x x x x x x
+             * x x x x x x x 
+             * x x x x x x x
+             * x x x x x x x
+            */
+            Debug.WriteLine(ToString());
+
+            // Check 4 across
+            for (int row = Height - 1; row >= 0; row--)
+            {
+                for(int col = 0; col < Width - 3; col++)
+                {
+                    if (IsFourAcross(row, col)) return Tokens[row,col];
+                }
+            }
+
+            // Check 4 up
+            for (int row = Height - 1; row >= 3; row--)
+            {
+                for (int col = 0; col < Width; col++)
+                {
+                    if (IsFourAcross(row, col)) return Tokens[row, col];
+                }
+            }
+
+            // Check 4 diagonal up
+            for (int row = Height - 1; row >= 3; row--)
+            {
+                for (int col = 0; col < Width - 3; col++)
+                {
+                    if (IsFourDiagonalUp(row,col)) return Tokens[row, col];
+                }
+            }
+
+            // Check 4 diagonal down
+            for (int row = 0; row < Height - 3; row++)
+            {
+                for (int col = 0; col < Width - 3; col++)
+                {
+                    if (IsFourDiagonalDown(row, col)) return Tokens[row, col];
+                }
+            }
+
+            return '-';
+
+        }
+
+        public bool IsFourUp(int bottomRow, int col)
+        {
+            if (Tokens[bottomRow, col] == '-') return false;
+            return (bottomRow < Height && bottomRow - 3 <= 0 &&
+                Tokens[bottomRow, col] == Tokens[bottomRow - 1, col] &&
+                Tokens[bottomRow, col] == Tokens[bottomRow - 2, col] &&
+                Tokens[bottomRow, col] == Tokens[bottomRow - 3, col]);
+        }
+
+        public bool IsFourAcross(int row, int leftCol)
+        {
+            if (Tokens[row, leftCol] == '-') return false;
+            return (leftCol >= 0 && leftCol + 3 < Width &&
+                Tokens[row, leftCol] == Tokens[row, leftCol + 1] &&
+                Tokens[row, leftCol] == Tokens[row, leftCol + 2] &&
+                Tokens[row, leftCol] == Tokens[row, leftCol + 3]);
+        }
+
+        public bool IsFourDiagonalUp(int bottomRow, int leftCol)
+        {
+            if (Tokens[bottomRow, leftCol] == '-') return false;
+            return (bottomRow < Height && bottomRow - 3 >= 0 &&
+                leftCol >= 0 && leftCol + 3 < Width &&
+                Tokens[bottomRow, leftCol] == Tokens[bottomRow - 1, leftCol + 1] &&
+                Tokens[bottomRow, leftCol] == Tokens[bottomRow - 2, leftCol + 2] &&
+                Tokens[bottomRow, leftCol] == Tokens[bottomRow - 3, leftCol + 3]);
+        }
+
+        public bool IsFourDiagonalDown(int topRow, int leftCol)
+        {
+            if (Tokens[topRow, leftCol] == '-') return false;
+            return (topRow >= 0 && topRow + 3 < Height &&
+                leftCol >= 0 && leftCol + 3 < Width &&
+                Tokens[topRow, leftCol] == Tokens[topRow + 1, leftCol + 1] &&
+                Tokens[topRow, leftCol] == Tokens[topRow + 2, leftCol + 2] &&
+                Tokens[topRow, leftCol] == Tokens[topRow + 3, leftCol + 3]);
         }
 
         /// <summary>
