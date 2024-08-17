@@ -61,7 +61,8 @@ namespace ConnectFour.Model
 
 
         /// <summary>
-        /// Place the designated player's token in the designated column
+        /// Place the designated player's token in the designated column, 
+        /// return the row in that column where the token was placed
         /// </summary>
         /// <param name="col"></param> 
         ///     0 < col < Board.Width
@@ -171,7 +172,7 @@ namespace ConnectFour.Model
             {
                 for (int col = 0; col < Width; col++)
                 {
-                    if (IsFourAcross(row, col)) return Tokens[row, col];
+                    if (IsFourUp(row, col)) return Tokens[row, col];
                 }
             }
 
@@ -200,7 +201,7 @@ namespace ConnectFour.Model
         public bool IsFourUp(int bottomRow, int col)
         {
             if (Tokens[bottomRow, col] == '-') return false;
-            return (bottomRow < Height && bottomRow - 3 <= 0 &&
+            return (bottomRow < Height && bottomRow - 3 >= 0 &&
                 Tokens[bottomRow, col] == Tokens[bottomRow - 1, col] &&
                 Tokens[bottomRow, col] == Tokens[bottomRow - 2, col] &&
                 Tokens[bottomRow, col] == Tokens[bottomRow - 3, col]);

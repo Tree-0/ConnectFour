@@ -73,12 +73,14 @@ namespace ConnectFour
             }
         }
 
+
         /// <summary>
         /// When a cell is clicked, that is the selected Cell with a respective
         /// selected border.
         /// When a cell loses focus, it is no longer the selected border
         /// </summary>
         private Border? _selectedBorder { get; set; }
+
 
         /// <summary>
         /// Constructor
@@ -94,6 +96,7 @@ namespace ConnectFour
             PlayerTurn = 'R';
 
         }
+
 
         /// <summary>
         /// PropertyChanged: Event for DataBinding
@@ -199,16 +202,26 @@ namespace ConnectFour
                 return;
             }
 
-            // Move finished, increase turn count
-            TurnNumber++;
-
             // Place Token 
             int col = Grid.GetColumn(_selectedBorder);
             int row = Board.PlaceToken(col, PlayerTurn);
 
-            // if column is full token will not add
-            if (!AddTokenToGridCell(row, col))
+            // if column is full token will not add to model
+            if (row == -1)
+            {
                 GameNameTextBox.Text = "Column is full";
+                return;
+            }
+
+            // Add token to the grid visually
+            if (!AddTokenToGridCell(row, col))
+            {
+                GameNameTextBox.Text = "Failed to add token to the grid";
+                return;
+            }
+
+            // Move finished, increase turn count
+            TurnNumber++;
 
             // Check for a winner
             char winner = Board.CheckForWin();
