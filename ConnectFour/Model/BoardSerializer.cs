@@ -23,6 +23,16 @@ namespace ConnectFour.Model
     /// However, I use strings, chars, etc just to work with the data... Is that pointless? 
     /// I'm not really actually working directly with bits.
     /// 
+    /// 
+    /// TODO
+    /// 
+    /// FIX CLICKING EXPORT -> IMPORT -> EXPORT -> IMPORT AND THE SECOND TIME NO BOARD IS PROPERLY EXPORTED
+    /// 
+    /// FIX DESERIALIZATION STILL NOT QUITE WORKING
+    /// 
+    /// FIX MODEL NOT MATCHING VIEW AND VICE VERSA DURING DESERIALIZATION: SOMETHING GETS MISINTERPRETED DURING IMPORT TO MODEL
+    /// 
+    /// 
     /// </summary>
     public class BoardSerializer
     {
@@ -140,6 +150,7 @@ namespace ConnectFour.Model
                 return _board.Tokens;
             }
 
+            Debug.WriteLine(code);
 
             // convert from 0x to long base 10, then convert base 10 to binary string
             //ulong decimalCode = Convert.ToUInt64(code, 16);
@@ -205,6 +216,7 @@ namespace ConnectFour.Model
                     bit++;
 
                     Debug.WriteLine("Current Deserialization State:");
+                    Debug.WriteLine(code);
                     Debug.WriteLine(Print2DArrayState(Tokens, _board.Height, _board.Width));
                     
                 }
