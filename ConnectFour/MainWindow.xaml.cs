@@ -38,6 +38,9 @@ namespace ConnectFour
         // model of board, containing all tokens
         public Board Board { get; set; }
 
+        // BoardSerializer, takes Board and imports / exports codes representing board state
+        public BoardSerializer BoardSerializer { get; set; }
+
         /// <summary>
         /// TurnNumber: the number of turns played in the current game
         /// </summary>
@@ -101,6 +104,8 @@ namespace ConnectFour
             TurnNumber = 0;
             PlayerTurn = 'R';
             _isGameOver = false;
+
+            BoardSerializer = new BoardSerializer(Board);
 
         }
 
@@ -195,6 +200,32 @@ namespace ConnectFour
 
 
         /// <summary>
+        /// Remove any tokens on the BoardGrid and redraw all tokens to match the Board model
+        /// </summary>
+        private void RefreshAllTokensOnGrid()
+        {
+            RemoveAllTokensFromGrid();
+
+            for (int col = 0; col < Board.Width; col++)
+            {
+                for (int row = Board.Height - 1; row >= 0; row--)
+                {
+                    if (Board.Tokens[row,col] == '-')
+                        continue;
+
+                    AddTokenToGridCell(row, col);
+                    TurnNumber++;
+                    // Switch player, increment turn
+                    PlayerTurn = (PlayerTurn == 'Y') ? 'R' : 'Y';
+                }
+            }
+
+            // once game state is fully imported, check if there's a winner on the board
+            CheckForWin();
+        }
+
+
+        /// <summary>
         /// Make the previewed move final- place token, increment turn counter, switch teams
         /// </summary>
         /// <param name="sender"></param>
@@ -239,7 +270,22 @@ namespace ConnectFour
             // Move finished, increase turn count
             TurnNumber++;
 
-            // Check for a winner
+            // Check for a winner, update text if there is one
+            CheckForWin();
+
+            // Prevent accidentally stacking multiple tokens on each other
+            _selectedBorder = null;
+
+            // Switch player
+            PlayerTurn = (PlayerTurn == 'Y') ? 'R' : 'Y';
+        }
+
+
+        /// <summary>
+        /// Check if there is a 4 in a row anywhere on the board, and set text / properties accordingly
+        /// </summary>
+        private void CheckForWin()
+        {
             char winner = Board.CheckForWin();
             if (winner == 'Y')
             {
@@ -255,12 +301,6 @@ namespace ConnectFour
             {
                 GameNameTextBox.Text = "Connect 4";
             }
-
-            // Prevent accidentally stacking multiple tokens on each other
-            _selectedBorder = null;
-
-            // Switch player
-            PlayerTurn = (PlayerTurn == 'Y') ? 'R' : 'Y';
         }
 
 
@@ -284,6 +324,9 @@ namespace ConnectFour
             TurnNumber = 0;
             PlayerTurn = 'R';
             _isGameOver = false;
+
+            // Remove any export/import codes
+            SerializeTextBox.Text = "code";
         }
 
 
@@ -327,7 +370,7 @@ namespace ConnectFour
                 }
 
                 int col = Grid.GetColumn(selectedBorder);
-                int row = Board.GetLowestEmptyRow(col);
+                int row = Board.GetLowestEmptySpace(col);
                 if (row != -1)
                 {
                     AddTokenPreviewToGridCell(row, col);
@@ -359,7 +402,7 @@ namespace ConnectFour
 
                 // remove preview token from de-selected cell
                 int col = Grid.GetColumn(selectedBorder);
-                int row = Board.GetLowestEmptyRow(col);
+                int row = Board.GetLowestEmptySpace(col);
                 RemoveTokenPreviewFromGridCell(row, col);
 
             }
@@ -441,5 +484,45 @@ namespace ConnectFour
             }
         }
 
+        private void SerializeButton_Click(object sender, RoutedEventArgs e)
+        {
+            Debug.WriteLine("Board to serialize:");
+            BoardSerializer.PrintBoardState();
+
+            string code = BoardSerializer.Serialize();
+            SerializeTextBox.Text = code;
+
+            // Copy text to clipboard for easy paste
+            Clipboard.SetText(code);
+        }
+
+        private void DeSerializeButton_Click(object sender, RoutedEventArgs e)
+        {
+
+            BoardSerializer.PrintBoardState();
+            string code = SerializeTextBox.Text;
+
+            RestartButton_Click(sender, e);
+
+            // Get Tokens
+            bool success;
+            char[,] DeSerializedTokens = BoardSerializer.DeSerialize(code, out success);
+
+
+            // if no code was given to import, warning message
+            if (!success)
+            {
+                SerializeTextBox.Text = "No code to import";
+                return;
+            }
+
+            // put new tokens in Board model
+            Board.Tokens = DeSerializedTokens;
+
+            Debug.WriteLine("Deserialized Board:");
+            Debug.WriteLine(Board.ToString());
+
+            RefreshAllTokensOnGrid();
+        }
     }
 }

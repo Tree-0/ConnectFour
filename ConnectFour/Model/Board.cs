@@ -10,9 +10,6 @@ namespace ConnectFour.Model
 {
     /*TODO
      * 
-     * 
-     * - - - NEW CLASS FOR SERIALIZATION OF BOARD INTO BINARY OR 0x
-     * 
      * - MAKE GAME MORE VISUALLY SMOOTH AND APPEALING
      *      - Weird Grid Borders
      *      - Animation for dropping token?
@@ -22,14 +19,14 @@ namespace ConnectFour.Model
 
     public class Board
     {
-        public char[,] Tokens;
+        public char[,] Tokens { get; set; }
 
         public int Height { get; }
 
         public int Width { get; }
 
         // number of empty rows at the top of the board
-        // convenience property for later
+        // a surprise tool that will help us later
         public int EmptyRows { get; set; }
 
         /// <summary>
@@ -52,6 +49,15 @@ namespace ConnectFour.Model
                     Tokens[row, col] = '-';
                 }
             }
+        }
+
+        public Board(char[,] tokens)
+        {
+            Tokens = tokens;
+            Height = tokens.GetLength(0);
+            Width = tokens.GetLength(1);
+            
+            
         }
 
 
@@ -86,7 +92,13 @@ namespace ConnectFour.Model
             return rowPlaced;
         }
 
-        public int GetLowestEmptyRow(int col)
+
+        /// <summary>
+        /// In a particular column, get the row index of the lowest empty space in that column
+        /// </summary>
+        /// <param name="col"></param>
+        /// <returns></returns>
+        public int GetLowestEmptySpace(int col)
         {
             for (int row = Height - 1; row >= 0; row--)
             {
@@ -98,6 +110,31 @@ namespace ConnectFour.Model
 
             // No Empty Rows
             return -1; 
+        }
+
+
+        /// <summary>
+        /// Get the number of empty rows at the top of a board... will be the minimum 
+        /// value of GetLowestEmptySpace for every column
+        /// </summary>
+        /// <returns></returns>
+        public int GetEmptyRows()
+        {
+            int emptyRows = Height;
+
+            for (int col = 0; col < Width; col++)
+            {
+                int emptyRowsInCol = GetLowestEmptySpace(col);
+
+                // if a column is full, the board has no empty rows
+                if (emptyRowsInCol == -1) return 0;
+
+                // if current column has fewer empty rows than the current count, count must shrink
+                if (emptyRowsInCol < emptyRows)
+                    emptyRows = emptyRowsInCol;
+            }
+
+            return emptyRows;
         }
 
 
@@ -132,6 +169,8 @@ namespace ConnectFour.Model
                 }
             }
 
+            EmptyRows = Height;
+
             return true;
         }
 
@@ -151,6 +190,7 @@ namespace ConnectFour.Model
              * x x x x x x x
              * x x x x x x x
             */
+
             Debug.WriteLine(ToString());
 
             // Check 4 across

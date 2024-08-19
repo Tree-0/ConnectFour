@@ -40,6 +40,10 @@
         <!-- Label -->
         <TextBlock x:Name="GameNameTextBox" Text="Connect 4" FontFamily="Courier New Bold" FontSize="20" Grid.Column="1" TextAlignment="Center" VerticalAlignment="Center"/>
         
+        
+
+
+
         <!-- Info Panel -->
         <StackPanel Grid.Row="1" Grid.Column="0" >
             <TextBlock Text="Player Turn:" FontSize="20" TextWrapping="Wrap" Margin="0,10,0,10"/>
@@ -47,7 +51,18 @@
             <TextBlock Text="Turn #:" Margin="0,10,0,10"/>
             <TextBlock x:Name="TurnCountTextBlock" Text="{Binding TurnNumber, Mode=OneWay}" Background="LightGray"/>
         </StackPanel>
-        
+
+        <!-- Game Board Serializer Buttons-->
+        <StackPanel Grid.Row="1" Grid.Column="2">
+            <Button x:Name="SerializeButton" Content="Export" Width="100" Height="100" MaxWidth="100" MaxHeight="50"
+                    Margin="0,10,0,10" Click="SerializeButton_Click"/>
+            <TextBox x:Name="SerializeTextBox" Text="code" Foreground="Gray" Background="LightGray" FontSize="20"
+                       HorizontalContentAlignment="Center" Margin="0,10,0,10" Focusable="True" Width="100" TextWrapping="Wrap"/>
+            <Button x:Name="DeSerializeButton" Content="Import" Width="100" Height="100" MaxWidth="100" MaxHeight="50"
+                    Margin="0,10,0,10" Click="DeSerializeButton_Click"/>
+        </StackPanel>
+
+
         <!-- Connect 4 Board -->
         <Grid Name="BoardGrid"  Grid.Column="1" Grid.Row="1" MaxHeight="400" MaxWidth="400" Focusable="True">
             
