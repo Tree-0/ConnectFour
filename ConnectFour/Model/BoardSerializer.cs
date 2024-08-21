@@ -184,10 +184,22 @@ namespace ConnectFour.Model
             for (int col = 0; col < _board.Width; col++)
             {
                 bool readingTokens = false;
+                Debug.WriteLine("reading empty space");
 
-                for (int row = emptyRows; row < _board.Height; row++)
+                for (int row = emptyRows; row <= _board.Height; row++)
                 {
                     if (bit >= binaryCode.Length) { break; }
+
+                    // if there are no tokens in a row, the "token" signifier will be after all zeroes denoting empty space.
+                    // need to catch it and skip this bit so the deserializer does not think empty spaces in following columns
+                    // are red. 
+                    if (row == _board.Height && !readingTokens)
+                    {
+                            bit++;
+                            break;                                
+                    }
+                    if (row == _board.Height)
+                        break;
 
                     // empty space in column
                     if (binaryCode[bit] == '0' && !readingTokens)
@@ -197,6 +209,7 @@ namespace ConnectFour.Model
                     // context switch detected, prepare to place tokens
                     else if (binaryCode[bit] == '1' && !readingTokens)
                     {
+                        Debug.WriteLine("Switch to reading tokens");
                         readingTokens = true;
                         row--;
                     }
