@@ -141,34 +141,31 @@ namespace ConnectFour.Model
         /// <returns></returns>
         public char[,] DeSerialize(string code, out bool success)
         {
-
             // if no new code is being imported, just return the current board
-            if (code == null || code == string.Empty || code == "code"
+            if (code == null || code == string.Empty 
+                || code == "code"
                 || code == "No code to import")
             {
                 success = false;
                 return _board.Tokens;
             }
 
-            Debug.WriteLine(code);
-
-            // convert from 0x to long base 10, then convert base 10 to binary string
-            //ulong decimalCode = Convert.ToUInt64(code, 16);
-            //string binaryCode = decimalCode.ToString("b");
+            /* convert from 0x to long base 10, then convert base 10 to binary string
+            *  ulong decimalCode = Convert.ToUInt64(code, 16);
+            *  string binaryCode = decimalCode.ToString("b");
+            */
 
             string binaryCode = code;
 
-            // I didn't have a good way to properly pad the binaryCode with any needed leading zeros when deserialized 
-            // from hexidecimal. i.e. if Board.EmptyRows = 2, binaryCode leads with '10' but I need '010' because the 
-            // first 3 bits should always solely be for representing emptyRows...
-            //int emptyRows = (_board.Height*_board.Width + _board.Width + 3 - binaryCode.Length)/_board.Width;
-            //int emptyRowBits = Convert.ToString(emptyRows, 2).Length;
+            /* I didn't have a good way to properly pad the binaryCode with any needed leading zeros when deserialized 
+            *  from hexidecimal.i.e. if Board.EmptyRows = 2, binaryCode leads with '10' but I need '010' because the
+            *  first 3 bits should always solely be for representing emptyRows...
+            *  int emptyRows = (_board.Height * _board.Width + _board.Width + 3 - binaryCode.Length) / _board.Width;
+            *  int emptyRowBits = Convert.ToString(emptyRows, 2).Length;
+            */
 
             int emptyRows = Convert.ToInt32(code.Substring(0, 3), 2);
             int bitsPerColumn = _board.Height - emptyRows + 1;
-
-            // get bits to iterate through, starting after the bits designating EmptyRows
-            int bit = 3;
 
             // Array to return, representing Board
             char[,] Tokens = new char[_board.Height, _board.Width];
@@ -180,58 +177,55 @@ namespace ConnectFour.Model
                 }
             }
 
-            // populate Tokens
+            // populate board with tokens
+            
+            int bit = 3;  // Start reading after the first 3 bits
+
             for (int col = 0; col < _board.Width; col++)
             {
+                Debug.WriteLine($"Binary: {binaryCode}");
+                Debug.WriteLine($"Index: {bit}");
+                Debug.WriteLine(Print2DArrayState(Tokens, _board.Height, _board.Width));
+
                 bool readingTokens = false;
-                Debug.WriteLine("reading empty space");
 
-                for (int row = emptyRows; row <= _board.Height; row++)
+                int row = emptyRows;
+                while (row <= _board.Height)
                 {
-                    if (bit >= binaryCode.Length) { break; }
-
-                    // if there are no tokens in a row, the "token" signifier will be after all zeroes denoting empty space.
-                    // need to catch it and skip this bit so the deserializer does not think empty spaces in following columns
-                    // are red. 
-                    if (row == _board.Height && !readingTokens)
+                    if (!readingTokens)
                     {
+                        if (binaryCode[bit] == '0')
+                        {
+                            row++;
                             bit++;
-                            break;                                
+                        }
+                        else
+                        {
+                            readingTokens = true;
+                            bit++;
+                        }
                     }
-                    if (row == _board.Height)
+                    else if (row >= _board.Height)
+                    {
                         break;
-
-                    // empty space in column
-                    if (binaryCode[bit] == '0' && !readingTokens)
-                    {
-                        Tokens[row, col] = '-';
                     }
-                    // context switch detected, prepare to place tokens
-                    else if (binaryCode[bit] == '1' && !readingTokens)
+                    else
                     {
-                        Debug.WriteLine("Switch to reading tokens");
-                        readingTokens = true;
-                        row--;
-                    }
-                    // red token detected
-                    else if (binaryCode[bit] == '0' && readingTokens)
-                    {
-                        Tokens[row, col] = 'R';
-
-                    }
-                    // yellow token detected
-                    else if (binaryCode[bit] == '1' && readingTokens)
-                    {
-                        Tokens[row, col] = 'Y';
+                        if (binaryCode[bit] == '0')
+                        {
+                            Tokens[row, col] = 'R';
+                            row++;
+                            bit++;
+                        }
+                        else
+                        {
+                            Tokens[row, col] = 'Y';
+                            row++;
+                            bit++;
+                        }
                     }
 
-                    // read next 
-                    bit++;
 
-                    Debug.WriteLine("Current Deserialization State:");
-                    Debug.WriteLine(code);
-                    Debug.WriteLine(Print2DArrayState(Tokens, _board.Height, _board.Width));
-                    
                 }
             }
 

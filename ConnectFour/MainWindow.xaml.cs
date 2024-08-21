@@ -213,10 +213,11 @@ namespace ConnectFour
                     if (Board.Tokens[row,col] == '-')
                         continue;
 
+                    PlayerTurn = (Board.Tokens[row,col] == 'R') ? 'R' : 'Y';
                     AddTokenToGridCell(row, col);
                     TurnNumber++;
                     // Switch player, increment turn
-                    PlayerTurn = (PlayerTurn == 'Y') ? 'R' : 'Y';
+                    
                 }
             }
 
