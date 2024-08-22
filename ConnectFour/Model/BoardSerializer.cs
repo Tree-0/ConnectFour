@@ -15,24 +15,6 @@ namespace ConnectFour.Model
 {
     /// <summary>
     /// Class for importing and exporting codes that represent the state of the Connect 4 Board. 
-    /// I don't have the knowledge to set up real multiplayer yet, so turn based exporting / importing codes is
-    /// a couple tiers down in terms of quality... good practice.
-    /// 
-    /// Honestly not sure if there's much point to this class beyond basic algorithm practice.
-    /// Ideally, these codes would only need to be stored in N bits where N = binary code string length.
-    /// However, I use strings, chars, etc just to work with the data... Is that pointless? 
-    /// I'm not really actually working directly with bits.
-    /// 
-    /// 
-    /// TODO
-    /// 
-    /// FIX CLICKING EXPORT -> IMPORT -> EXPORT -> IMPORT AND THE SECOND TIME NO BOARD IS PROPERLY EXPORTED
-    /// 
-    /// FIX DESERIALIZATION STILL NOT QUITE WORKING
-    /// 
-    /// FIX MODEL NOT MATCHING VIEW AND VICE VERSA DURING DESERIALIZATION: SOMETHING GETS MISINTERPRETED DURING IMPORT TO MODEL
-    /// 
-    /// 
     /// </summary>
     public class BoardSerializer
     {
@@ -107,7 +89,8 @@ namespace ConnectFour.Model
                     }
                     else
                     {
-                        // This would occur if somehow you have floating tokens 
+                        // This would occur if there is an empty space '-' found but placingTokens == true
+                        // This would imply that there is a floating token.
                         // tokens should always either be at the bottom or affected by gravity
                         throw new Exception("Board is not valid, stopping serialization");
                     }
@@ -122,14 +105,6 @@ namespace ConnectFour.Model
             }
 
             return code.ToString();
-
-            //// convert to long base 10, then convert to base 16 string
-            //ulong decimalCode = Convert.ToUInt64(code.ToString(), 2);
-            //string hexCode = decimalCode.ToString("X");
-
-            //Debug.WriteLine($"{code}\n{decimalCode}\n{hexCode}");
-
-            //return hexCode.ToUpper();
         }
 
 
@@ -141,28 +116,17 @@ namespace ConnectFour.Model
         /// <returns></returns>
         public char[,] DeSerialize(string code, out bool success)
         {
-            // if no new code is being imported, just return the current board
-            if (code == null || code == string.Empty 
+            // if no new or valid code is being imported, just return the current board
+            if (code == null || code == string.Empty
                 || code == "code"
-                || code == "No code to import")
+                || code == "Invalid code"
+                || !ContainsOnlyAllowedChars(code, "10"))
             {
                 success = false;
                 return _board.Tokens;
             }
 
-            /* convert from 0x to long base 10, then convert base 10 to binary string
-            *  ulong decimalCode = Convert.ToUInt64(code, 16);
-            *  string binaryCode = decimalCode.ToString("b");
-            */
-
             string binaryCode = code;
-
-            /* I didn't have a good way to properly pad the binaryCode with any needed leading zeros when deserialized 
-            *  from hexidecimal.i.e. if Board.EmptyRows = 2, binaryCode leads with '10' but I need '010' because the
-            *  first 3 bits should always solely be for representing emptyRows...
-            *  int emptyRows = (_board.Height * _board.Width + _board.Width + 3 - binaryCode.Length) / _board.Width;
-            *  int emptyRowBits = Convert.ToString(emptyRows, 2).Length;
-            */
 
             int emptyRows = Convert.ToInt32(code.Substring(0, 3), 2);
             int bitsPerColumn = _board.Height - emptyRows + 1;
@@ -192,6 +156,7 @@ namespace ConnectFour.Model
                 int row = emptyRows;
                 while (row <= _board.Height)
                 {
+                    // reading any empty spaces
                     if (!readingTokens)
                     {
                         if (binaryCode[bit] == '0')
@@ -199,16 +164,19 @@ namespace ConnectFour.Model
                             row++;
                             bit++;
                         }
+                        // token signifier found, switch to reading tokens
                         else
                         {
                             readingTokens = true;
                             bit++;
                         }
                     }
+                    // bottom of column reached
                     else if (row >= _board.Height)
                     {
                         break;
                     }
+                    // reading tokens
                     else
                     {
                         if (binaryCode[bit] == '0')
@@ -233,6 +201,20 @@ namespace ConnectFour.Model
             return Tokens;
         }
 
+
+        /// <summary>
+        /// Make sure that the input string only contains characters in the allowedChars string
+        /// </summary>
+        /// <param name="input"></param>
+        /// <param name="allowedChars"></param>
+        /// <returns></returns>
+        public bool ContainsOnlyAllowedChars(string input, string allowedChars)
+        {
+            var allowedSet = new HashSet<char>(allowedChars);
+            return input.All(c => allowedSet.Contains(c));
+        }
+
+
         public void PrintBoardState()
         {
             Debug.WriteLine(_board.ToString());
@@ -240,6 +222,8 @@ namespace ConnectFour.Model
 
         /// <summary>
         /// Returns a string representation of the board, where each row is broken by \n and each item is separated by ','
+        /// 
+        /// For debugging the DeSerialize function, when a char[,] array is being populated but there is no parent Board object
         /// </summary>
         /// <returns></returns>
         public string Print2DArrayState(char[,] Tokens, int Height, int Width)

@@ -56,7 +56,8 @@ namespace ConnectFour.Model
             Tokens = tokens;
             Height = tokens.GetLength(0);
             Width = tokens.GetLength(1);
-            
+
+            EmptyRows = GetEmptyRows();
             
         }
 

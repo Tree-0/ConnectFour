@@ -213,10 +213,9 @@ namespace ConnectFour
                     if (Board.Tokens[row,col] == '-')
                         continue;
 
-                    PlayerTurn = (Board.Tokens[row,col] == 'R') ? 'R' : 'Y';
+                    PlayerTurn = Board.Tokens[row, col];
                     AddTokenToGridCell(row, col);
                     TurnNumber++;
-                    // Switch player, increment turn
                     
                 }
             }
@@ -513,17 +512,24 @@ namespace ConnectFour
             // if no code was given to import, warning message
             if (!success)
             {
-                SerializeTextBox.Text = "No code to import";
+                SerializeTextBox.Text = "Invalid code";
                 return;
             }
 
             // put new tokens in Board model
             Board.Tokens = DeSerializedTokens;
+            Board.EmptyRows = Board.GetEmptyRows(); // surely there is a better design pattern?
 
             Debug.WriteLine("Deserialized Board:");
             Debug.WriteLine(Board.ToString());
 
             RefreshAllTokensOnGrid();
+        }
+
+        private void SerializeTextBox_GotFocus(object sender, RoutedEventArgs e)
+        {
+            if (SerializeTextBox.Text == "code" || SerializeTextBox.Text == "Invalid code")
+                SerializeTextBox.Text = "";
         }
     }
 }
